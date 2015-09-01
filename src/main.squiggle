@@ -7,8 +7,10 @@ let (
     String = global.String,
     setInterval = global.setInterval,
     document = global.document,
-    px = fn(n) String(n) ++ "px",
-    render = fn(state) h("div", {"className": "box"}, [String(state.count)]),
+    render = fn(state)
+        h("div", {"className": "box"},
+            ["tick ", String(state.count)]
+        ),
     app = Object(),
     start = fn() do {
         set("state", {"count": 0}, app);
@@ -25,8 +27,8 @@ let (
             newRoot = patch(app.root, patches)
         ) do {
             set("state", newState, app);
-            set("root", newRoot, app);
             set("tree", newTree, app);
+            set("root", newRoot, app);
         }
 ) start()
 

@@ -1902,12 +1902,6 @@ function appendPatch(apply, patch) {
         var String = sqgl$$get('String', global);
         var setInterval = sqgl$$get('setInterval', global);
         var document = sqgl$$get('document', global);
-        var px = sqgl$$freeze(function (n) {
-            if (arguments.length !== 1) {
-                throw new sqgl$$Error('expected 1 argument(s), got ' + arguments.length);
-            }
-            return $plus$plus(String(n), 'px');
-        });
         var render = sqgl$$freeze(function (state) {
             if (arguments.length !== 1) {
                 throw new sqgl$$Error('expected 1 argument(s), got ' + arguments.length);
@@ -1915,7 +1909,10 @@ function appendPatch(apply, patch) {
             return h('div', sqgl$$object([[
                     'className',
                     'box'
-                ]]), sqgl$$freeze([String(sqgl$$get('count', state))]));
+                ]]), sqgl$$freeze([
+                'tick ',
+                String(sqgl$$get('count', state))
+            ]));
         });
         var app = Object();
         var start = sqgl$$freeze(function () {
@@ -1947,8 +1944,8 @@ function appendPatch(apply, patch) {
                 var newRoot = patch(sqgl$$get('root', app), patches);
                 return function () {
                     set('state', newState, app);
-                    set('root', newRoot, app);
-                    return set('tree', newTree, app);
+                    set('tree', newTree, app);
+                    return set('root', newRoot, app);
                 }();
             }();
         });
