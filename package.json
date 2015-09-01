@@ -1,0 +1,15 @@
+{
+  "name": "squiggle-web-example",
+  "version": "0.0.0",
+  "description": "",
+  "main": "src/main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "browserify": "^11.0.1",
+    "virtual-dom": "^2.1.1"
+  }
+}
