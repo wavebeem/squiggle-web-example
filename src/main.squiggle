@@ -1,67 +1,168 @@
-let (
-    h = require("virtual-dom/h"),
-    diff = require("virtual-dom/diff"),
-    patch = require("virtual-dom/patch"),
-    createElement = require("virtual-dom/create-element"),
-    Object = global.Object,
-    String = global.String,
-    setInterval = global.setInterval,
-    document = global.document,
-    render = fn(state)
-        h("div", {"className": "box"},
-            ["tick ", String(state.count)]
-        ),
-    app = Object(),
-    start = fn() do {
-        set("state", {"count": 0}, app);
-        set("tree", render(app.state), app);
-        set("root", createElement(app.tree), app);
-        (document.body).appendChild(app.root);
-        setInterval(update, 1000);
-    },
-    update = fn()
-        let (
-            newState = app.state ~ {"count": app.state.count + 1},
-            newTree = render(newState),
-            patches = diff(app.tree, newTree),
-            newRoot = patch(app.root, patches)
-        ) do {
-            set("state", newState, app);
-            set("tree", newTree, app);
-            set("root", newRoot, app);
-        }
-) start()
+let h = require("virtual-dom/h")
+let diff = require("virtual-dom/diff")
+let patch = require("virtual-dom/patch")
+let createElement = require("virtual-dom/create-element")
 
-# var h = require('virtual-dom/h');
-# var diff = require('virtual-dom/diff');
-# var patch = require('virtual-dom/patch');
-# var createElement = require('virtual-dom/create-element');
-#
-# // 1: Create a function that declares what the DOM should look like
-# function render(count)  {
-#     return h('div', {
-#         style: {
-#             textAlign: 'center',
-#             lineHeight: (100 + count) + 'px',
-#             border: '1px solid red',
-#             width: (100 + count) + 'px',
-#             height: (100 + count) + 'px'
-#         }
-#     }, [String(count)]);
-# }
-#
-# // 2: Initialise the document
-# var count = 0;      // We need some app data. Here we just store a count.
-#
-# var tree = render(count);               // We need an initial tree
-# var rootNode = createElement(tree);     // Create an initial root DOM node ...
-# document.body.appendChild(rootNode);    // ... and it should be in the document
-#
-# // 3: Wire up the update logic
-# setInterval(function () {
-#       count++;
-#       var newTree = render(count);
-#       var patches = diff(tree, newTree);
-#       rootNode = patch(rootNode, patches);
-#       tree = newTree;
-# }, 1000);
+let String = global.String
+let Object = global.Object
+let document = global.document
+let body = document.body
+
+def unicode(codepoint) =
+    String.fromCharCode(parseInt(codepoint, 16))
+
+let CHAR_EMPTY = unicode("B7")
+let CHAR_PLAYER = "@"
+
+def freezeAfter(x, f) = do
+    f(x);
+    Object.freeze(x);
+end
+
+def rangeDo(a, b, f) =
+    if a < b
+        then do
+            f(a);
+            rangeDo(a + 1, b, f);
+        end
+        else undefined
+
+def rangeMap(a, b, f) =
+    freezeAfter(Array(), fn(xs)
+        rangeDo(a, b, fn(i) xs.push(f(i))))
+
+def hashCoord(x, y) =
+    [x, y].join(",")
+
+def roomMap(room, f) =
+    let w = room.width
+    let h = room.height
+    in freezeAfter(Object(), fn(newRoom) do
+        rangeDo(0, w, fn(x)
+            rangeDo(0, h, fn(y)
+                let key = hashCoord(x, y)
+                in set(key, newRoom, f(x, y, room[key]))
+            )
+        );
+        set("width", newRoom, room.width);
+        set("height", newRoom, room.height);
+    end)
+
+def makeRoom(w, h) =
+    freezeAfter(Object(), fn(room) do
+        rangeDo(0, w, fn(x)
+            rangeDo(0, h, fn(y)
+                set(hashCoord(x, y), undefined, room)
+            )
+        );
+        set("width", w, room);
+        set("height", h, room);
+    end)
+
+let model = {
+    "x": 0,
+    "y": 0,
+    "blink": false,
+    "room": makeRoom(40, 20)
+}
+
+def classes(cs) =
+    # Ugh, fix this parse issue.
+    (filter(cs, Boolean)).join(" ")
+
+def renderCell(x, y, model, occupant) =
+    let t = occupant.type
+    let c = if t == "Player"
+        then CHAR_PLAYER
+        else CHAR_EMPTY
+    let cs = classes([
+        "game-cell",
+        "has-" ++ t.toLowerCase(),
+        if model.blink and t == "Player"
+            then "is-blinking"
+            else ""
+    ])
+    in h("td", {"className": cs}, [c])
+
+def renderedCellsFor(model) =
+    let W = model.room.width
+    let H = model.room.height
+    in rangeMap(0, H, fn(y)
+        h("tr.game-row",
+            rangeMap(0, W, fn(x)
+                let occupant = {
+                    "type": if x == model.x and y == model.y
+                        then "Player"
+                        else "Empty"
+                }
+                in renderCell(x, y, model, occupant)
+            )
+        )
+    )
+
+def render(model) =
+    h("main", [
+        h("table.game-view",
+            h("tbody", renderedCellsFor(model))
+        ),
+        h("div.game-log", [Date()])
+    ])
+
+def updateAnimations(model) =
+    model ~ {"blink": not model.blink}
+
+def update(model, event) =
+    match event.type
+    case "Tick" => updateAnimations(model)
+    case "Key" => handleKey(model, event.code)
+    end
+
+let app = Object()
+
+def tick() =
+    let newModel = update(app.model, {"type": "Tick"})
+    in do
+        set("model", newModel, app);
+        updateView();
+        setTimeout(tick, 300);
+    end
+
+def updateView() =
+    let newTree = render(app.model)
+    let patches = diff(app.tree, newTree)
+    let newRoot = patch(app.rootNode, patches)
+    in do
+        set("rootNode", newRoot, app);
+        set("tree", newTree, app);
+    end
+
+def handleKeyPress(event) =
+    let message = {"type": "Key", "code": event.which}
+    let newModel = update(app.model, message)
+    in do
+        set("model", newModel, app);
+        updateView();
+    end
+
+def handleKey(model, code) =
+    let delta = match code
+        case 119 => {"y": model.y - 1} # W
+        case  97 => {"x": model.x - 1} # A
+        case 115 => {"y": model.y + 1} # S
+        case 100 => {"x": model.x + 1} # D
+    end
+    in model ~ delta
+
+def start() =
+    let tree = render(model)
+    let rootNode = createElement(tree)
+    in do
+        set("model", model, app);
+        set("rootNode", rootNode, app);
+        set("tree", tree, app);
+        body.appendChild(rootNode);
+        body.addEventListener("keypress", handleKeyPress);
+        tick();
+    end
+
+in start()

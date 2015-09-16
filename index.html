@@ -3,42 +3,72 @@
 <head>
     <title>Squiggle Example</title>
     <style>
-        html {
-            font-family: sans-serif;
-            font-weight: bold;
-            color: #000;
-            background: #fff;
+        * {
+            box-sizing: border-box;
         }
-        h1, h2 {
-            text-align: center;
-        }
-        h1 { color: #222; }
-        h2 { color: #888; }
-        .box {
-            margin: 0 auto;
-            text-align: center;
-            font-size: 30px;
-            /*border-radius: 50%;*/
-
-            background: #a0c;
+        html,
+        body {
+            padding: 0;
+            margin: 0;
             color: white;
-
-            width: 100px;
-            height: 100px;
-            line-height: 100px;
+            background: #222;
+            font-family: Menlo, Consolas, monospace;
         }
-        a {
-            color: inherit;
-            text-decoration: underline;
+        .game-view {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 100px;
+            color: white;
+            border: 0;
+            margin: 20px;
+            border-collapse: collapse;
+            border-spacing: 0;
+            table-layout: fixed;
+        }
+        .game-view .game-row {
+            white-space: nowrap;
+        }
+        .game-cell.has-empty {
+            color: #444;
+            text-shadow: 0 0 4px #444;
+        }
+        .game-cell.has-player {
+            color: #5e5;
+            text-shadow: 0 0 4px #5e5;
+        }
+        .game-cell {
+            position: relative;
+            box-sizing: content-box;
+            width: 20px;
+            height: 20px;
+            margin: 0;
+            border: 0;
+            display: inline-block;
+            text-align: center;
+            z-index: 1;
+        }
+        .game-view .game-cell.is-blinking {
+            background: #282;
+            box-shadow: 0 0 4px #282;
+            z-index: 2;
+        }
+        .game-log {
+            color: #fff;
+            text-shadow: 0 0 4px #fff;
+            position: fixed;
+            padding: 20px;
+            height: 100px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            font-size: 30px;
+            line-height: 40px;
         }
     </style>
 </head>
 <body>
-<h1>Squiggle Example</h1>
-<h2>
-    Featuring
-    <a href="https://github.com/Matt-Esch/virtual-dom">virtual-dom</a>
-</h2>
 <script src="build/bundle.js"></script>
 </body>
 </html>
