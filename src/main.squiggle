@@ -14,11 +14,6 @@ def unicode(codepoint) =
 let CHAR_EMPTY = unicode("B7")
 let CHAR_PLAYER = "@"
 
-def freezeAfter(x, f) = do
-    f(x);
-    Object.freeze(x);
-end
-
 def rangeDo(a, b, f) =
     if a < b
         then do
@@ -34,20 +29,6 @@ def rangeMap(a, b, f) =
 def hashCoord(x, y) =
     [x, y].join(",")
 
-def roomMap(room, f) =
-    let w = room.width
-    let h = room.height
-    in freezeAfter(Object(), fn(newRoom) do
-        rangeDo(0, w, fn(x)
-            rangeDo(0, h, fn(y)
-                let key = hashCoord(x, y)
-                in set(key, newRoom, f(x, y, room[key]))
-            )
-        );
-        set("width", newRoom, room.width);
-        set("height", newRoom, room.height);
-    end)
-
 def makeRoom(w, h) =
     freezeAfter(Object(), fn(room) do
         rangeDo(0, w, fn(x)
@@ -60,10 +41,10 @@ def makeRoom(w, h) =
     end)
 
 let model = {
-    "x": 0,
-    "y": 0,
-    "blink": false,
-    "room": makeRoom(40, 20)
+    x: 0,
+    y: 0,
+    blink: false,
+    room: makeRoom(40, 20)
 }
 
 def classes(cs) =
@@ -82,7 +63,7 @@ def renderCell(x, y, model, occupant) =
             then "is-blinking"
             else ""
     ])
-    in h("td", {"className": cs}, [c])
+    in h("td", {className: cs}, [c])
 
 def renderedCellsFor(model) =
     let W = model.room.width
@@ -91,7 +72,7 @@ def renderedCellsFor(model) =
         h("tr.game-row",
             rangeMap(0, W, fn(x)
                 let occupant = {
-                    "type": if x == model.x and y == model.y
+                    type: if x == model.x and y == model.y
                         then "Player"
                         else "Empty"
                 }
@@ -109,7 +90,7 @@ def render(model) =
     ])
 
 def updateAnimations(model) =
-    model ~ {"blink": not model.blink}
+    model ~ {blink: not model.blink}
 
 def update(model, event) =
     match event.type
@@ -120,7 +101,7 @@ def update(model, event) =
 let app = Object()
 
 def tick() =
-    let newModel = update(app.model, {"type": "Tick"})
+    let newModel = update(app.model, {type: "Tick"})
     in do
         set("model", newModel, app);
         updateView();
@@ -137,19 +118,27 @@ def updateView() =
     end
 
 def handleKeyPress(event) =
-    let message = {"type": "Key", "code": event.which}
+    let message = {type: "Key", code: event.which}
     let newModel = update(app.model, message)
     in do
         set("model", newModel, app);
         updateView();
     end
 
+
+let K = {
+    W: 119,
+    A: 97,
+    S: 115,
+    D: 100
+}
+
 def handleKey(model, code) =
     let delta = match code
-        case 119 => {"y": model.y - 1} # W
-        case  97 => {"x": model.x - 1} # A
-        case 115 => {"y": model.y + 1} # S
-        case 100 => {"x": model.x + 1} # D
+        case (K.W) => {y: model.y - 1}
+        case (K.A) => {x: model.x - 1}
+        case (K.S) => {y: model.y + 1}
+        case (K.D) => {x: model.x + 1}
     end
     in model ~ delta
 
