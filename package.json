@@ -10,6 +10,6 @@
   "license": "MIT",
   "dependencies": {
     "browserify": "^11.0.1",
-    "virtual-dom": "^2.1.1"
+    "react": "^0.13.3"
   }
 }

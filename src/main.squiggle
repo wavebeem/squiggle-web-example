@@ -1,12 +1,10 @@
-let h = require("virtual-dom/h")
-let diff = require("virtual-dom/diff")
-let patch = require("virtual-dom/patch")
-let createElement = require("virtual-dom/create-element")
+let React = require("react")
+
+let RE = React.createElement
 
 let String = global.String
 let Object = global.Object
 let document = global.document
-let body = document.body
 
 def unicode(codepoint) =
     String.fromCharCode(parseInt(codepoint, 16))
@@ -33,44 +31,120 @@ def makeRoom(w, h) =
     freezeAfter(Object(), fn(room) do
         rangeDo(0, w, fn(x)
             rangeDo(0, h, fn(y)
-                set(hashCoord(x, y), undefined, room)
+                set(room, hashCoord(x, y), undefined)
             )
         );
-        set("width", w, room);
-        set("height", h, room);
+        set(room, "width", w);
+        set(room, "height", h);
     end)
-
-let model = {
-    x: 0,
-    y: 0,
-    blink: false,
-    room: makeRoom(40, 20)
-}
 
 def classes(cs) =
     # Ugh, fix this parse issue.
     (filter(cs, Boolean)).join(" ")
+
+def dispatchEvent(event) =
+    let root = app.root
+    let state = root.state
+    let newState =
+        match event
+        case {type: "Key", code} => handleKey(state, code)
+        case {type: "Tick"} => handleTick(state)
+        end
+    in root.setState(newState)
+
+def handleTick(state) =
+    state ~ {blink: not state.blink}
+
+def handleKey(state, code) =
+    let x = state.x
+    let y = state.y
+    let delta =
+        match code
+        case (K.W) => {y: y - 1}
+        case (K.A) => {x: x - 1}
+        case (K.S) => {y: y + 1}
+        case (K.D) => {x: x + 1}
+        end
+    in state ~ delta
+
+let Clickhole =
+    def componentDidMount(@this) =
+        let elem = React.findDOMNode(this)
+        in elem.focus()
+    # Probably not the nicest thing for this parameter, but I'm unhappy to be
+    # passed data that seems to be undocumented?
+    def onKeyPress(@this, event, _someReactGarbage) =
+        let e = {
+            type: "Key",
+            code: event.which
+        }
+        in do
+            event.preventDefault();
+            dispatchEvent({type: "Key", code: event.which});
+        end
+    def render() =
+        RE("textarea", {
+            className: "clickhole",
+            onKeyPress
+        })
+    let proto = {
+        displayName: "Clickhole",
+        componentDidMount,
+        render,
+        onKeyPress
+    }
+    in React.createClass(proto)
+
+let GameView =
+    let state = {
+        x: 0,
+        y: 0,
+        blink: false,
+        room: makeRoom(40, 20)
+    }
+    def render(@this) =
+        let model = this.state
+        # let _ = console.log(model)
+        in RE("main", null,
+            RE("table", {className: "game-view"},
+                RE("tbody", null, renderedCellsFor(model))
+            ),
+            RE("div", {className: "game-log"}, Date()),
+            RE(Clickhole)
+        )
+    def getInitialState() = state
+    let proto = {
+        displayName: "GameView",
+        render,
+        getInitialState
+    }
+    in React.createClass(proto)
 
 def renderCell(x, y, model, occupant) =
     let t = occupant.type
     let c = if t == "Player"
         then CHAR_PLAYER
         else CHAR_EMPTY
-    let cs = classes([
+    let className = classes([
         "game-cell",
         "has-" ++ t.toLowerCase(),
         if model.blink and t == "Player"
             then "is-blinking"
             else ""
     ])
-    in h("td", {className: cs}, [c])
+    let props = {
+        key: hashCoord(x, y),
+        className
+    }
+    in RE("td", props, c)
 
 def renderedCellsFor(model) =
-    let W = model.room.width
-    let H = model.room.height
-    in rangeMap(0, H, fn(y)
-        h("tr.game-row",
-            rangeMap(0, W, fn(x)
+    let w = model.room.width
+    let h = model.room.height
+    in rangeMap(0, h, fn(y)
+        let key = String(y)
+        in RE("tr", {key, className: "game-row"},
+            rangeMap(0, w, fn(x)
                 let occupant = {
                     type: if x == model.x and y == model.y
                         then "Player"
@@ -81,50 +155,7 @@ def renderedCellsFor(model) =
         )
     )
 
-def render(model) =
-    h("main", [
-        h("table.game-view",
-            h("tbody", renderedCellsFor(model))
-        ),
-        h("div.game-log", [Date()])
-    ])
-
-def updateAnimations(model) =
-    model ~ {blink: not model.blink}
-
-def update(model, event) =
-    match event.type
-    case "Tick" => updateAnimations(model)
-    case "Key" => handleKey(model, event.code)
-    end
-
 let app = Object()
-
-def tick() =
-    let newModel = update(app.model, {type: "Tick"})
-    in do
-        set("model", newModel, app);
-        updateView();
-        setTimeout(tick, 300);
-    end
-
-def updateView() =
-    let newTree = render(app.model)
-    let patches = diff(app.tree, newTree)
-    let newRoot = patch(app.rootNode, patches)
-    in do
-        set("rootNode", newRoot, app);
-        set("tree", newTree, app);
-    end
-
-def handleKeyPress(event) =
-    let message = {type: "Key", code: event.which}
-    let newModel = update(app.model, message)
-    in do
-        set("model", newModel, app);
-        updateView();
-    end
-
 
 let K = {
     W: 119,
@@ -133,24 +164,24 @@ let K = {
     D: 100
 }
 
-def handleKey(model, code) =
-    let delta = match code
-        case (K.W) => {y: model.y - 1}
-        case (K.A) => {x: model.x - 1}
-        case (K.S) => {y: model.y + 1}
-        case (K.D) => {x: model.x + 1}
+def tick() =
+    do
+        dispatchEvent({type: "Tick"});
+        setTimeout(tick, 300);
     end
-    in model ~ delta
+
+def focusClickhole(_event) =
+    let elem = document.querySelector(".clickhole")
+    in elem.focus()
 
 def start() =
-    let tree = render(model)
-    let rootNode = createElement(tree)
+    let body = document.body
+    let root = React.createElement(GameView)
+    let container = document.getElementById("react-container")
+    let thing = React.render(root, container)
     in do
-        set("model", model, app);
-        set("rootNode", rootNode, app);
-        set("tree", tree, app);
-        body.appendChild(rootNode);
-        body.addEventListener("keypress", handleKeyPress);
+        set(app, "root", thing);
+        body.addEventListener("click", focusClickhole);
         tick();
     end
 
