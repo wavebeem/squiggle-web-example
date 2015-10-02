@@ -1,7 +1,12 @@
-let React = require("react")
+let React = require "react"
 
 let RE = React.createElement
 
+let setTimeout = global.setTimeout
+let parseInt = global.parseInt
+let Date = global.Date
+let Boolean = global.Boolean
+let Array = global.Array
 let String = global.String
 let Object = global.Object
 let document = global.document
@@ -64,6 +69,7 @@ def handleKey(state, code) =
         case (K.A) => {x: x - 1}
         case (K.S) => {y: y + 1}
         case (K.D) => {x: x + 1}
+        case _ => error "handleKey fail"
         end
     in state ~ delta
 
@@ -71,14 +77,9 @@ let Clickhole =
     def componentDidMount(@this) =
         let elem = React.findDOMNode(this)
         in elem.focus()
-    # Probably not the nicest thing for this parameter, but I'm unhappy to be
-    # passed data that seems to be undocumented?
-    def onKeyPress(@this, event, _someReactGarbage) =
-        let e = {
-            type: "Key",
-            code: event.which
-        }
-        in do
+    # React is passing some seemingly undocumented second parameter here :\
+    def onKeyPress(event, _) =
+        do
             event.preventDefault();
             dispatchEvent({type: "Key", code: event.which});
         end
@@ -170,7 +171,7 @@ def tick() =
         setTimeout(tick, 300);
     end
 
-def focusClickhole(_event) =
+def focusClickhole(_) =
     let elem = document.querySelector(".clickhole")
     in elem.focus()
 
