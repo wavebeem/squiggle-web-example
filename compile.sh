@@ -5,6 +5,6 @@ export PATH="$(npm bin):$PATH"
 
 date
 
-browserify --debug -c 'squiggle /dev/stdin' src/main.squiggle -o build/bundle.js
+browserify --debug -t squiggle-browserify src/main.sqg -o build/bundle.js
 
 echo "Compilation done"

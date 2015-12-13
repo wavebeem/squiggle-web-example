@@ -1,0 +1,48 @@
+let Clickhole = require "./clickhole"
+let {Object, React} = global
+let RE = React.createElement
+
+def makeRoom(w, h)
+    def mutateRoom(room)
+        rangeDo(0, w, fn(x)
+            rangeDo(0, h, fn(y)
+                set(room, hashCoord(x, y), undefined)
+            )
+        )
+        set(room, "width", w)
+        set(room, "height", h)
+    end
+
+    freezeAfter(Object(), mutateRoom)
+end
+
+let state = {
+    x: 0,
+    y: 0,
+    blink: false,
+    room: makeRoom(40, 20)
+}
+
+def render(@this)
+    RE("main", null,
+        RE("table", {className: "game-view"},
+            RE("tbody", null, renderedCellsFor(this.state))
+        ),
+        RE("div", {className: "game-log"}, Date()),
+        RE(Clickhole)
+    )
+end
+
+def getInitialState()
+    state
+end
+
+let proto = {
+    displayName: "GameView",
+    render,
+    getInitialState
+}
+
+let GameView = React.createClass(proto)
+
+Object.assign(exports, {GameView})

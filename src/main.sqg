@@ -1,0 +1,152 @@
+let React = require "react"
+
+let RE = React.createElement
+
+let {
+    setTimeout,
+    Date,
+    Boolean,
+    Array,
+    String,
+    Object,
+    document
+} = global
+
+let CHAR_EMPTY = "\u{B7}"
+let CHAR_PLAYER = "@"
+
+def set(obj, key, val)
+    Object.assign(obj, {(key): val})
+end
+
+def rangeDo(a, b, f)
+    if a < b then
+        f(a)
+        rangeDo(a + 1, b, f)
+    else
+        undefined
+    end
+end
+
+def rangeMap(a, b, f)
+    freezeAfter(Array(), fn(xs)
+        rangeDo(a, b, fn(i)
+            xs.push(f(i))
+        )
+    )
+end
+
+def hashCoord(x, y)
+    [x, y].join(" ")
+end
+
+def classes(cs)
+    filter(cs, Boolean).join(" ")
+end
+
+def dispatchEvent(event)
+    let {root, state} = app
+    let newState =
+        match event
+        case {type: "Key", code} then
+            handleKey(state, code)
+        case {type: "Tick"} then
+            handleTick(state)
+        end
+
+    root.setState(newState)
+end
+
+def handleTick(state)
+    state ~ {blink: not state.blink}
+end
+
+def handleKey(state, code)
+    let {x, y} = state
+    let delta =
+        match code
+        case (K.W) then {y: y - 1}
+        case (K.A) then {x: x - 1}
+        case (K.S) then {y: y + 1}
+        case (K.D) then {x: x + 1}
+        case _ then error "handleKey fail"
+        end
+
+    state ~ delta
+end
+
+def renderCell(x, y, model, occupant)
+    let t = occupant.type
+    let c =
+        if t == "Player"
+        then CHAR_PLAYER
+        else CHAR_EMPTY
+        end
+    let className = classes([
+        "game-cell",
+        "has-" .. t.toLowerCase(),
+        if model.blink and t == "Player"
+        then "is-blinking"
+        else ""
+        end
+    ])
+    let key = hashCoord(x, y)
+    let props = {key, className}
+
+    RE("td", props, c)
+end
+
+def renderedCellsFor(model)
+    let {width: w, height: h} = model.room
+
+    def eachY(y)
+        def eachX(x)
+            let occupant = {
+                type:
+                    if x == model.x and y == model.y
+                    then "Player"
+                    else "Empty"
+                    end
+            }
+            renderCell(x, y, model, occupant)
+        end
+
+        let key = String(y)
+        let className = "game-row"
+
+        RE("tr", {key, className}, rangeMap(0, w, eachX))
+    end
+
+    rangeMap(0, h, eachY)
+end
+
+let app = Object()
+
+let K = {
+    W: 119,
+    A: 97,
+    S: 115,
+    D: 100
+}
+
+def tick()
+    dispatchEvent({type: "Tick"})
+    setTimeout(tick, 300)
+end
+
+def focusClickhole(_)
+    let elem = document.querySelector(".clickhole")
+    elem.focus()
+end
+
+def start()
+    let body = document.body
+    let root = React.createElement(GameView)
+    let container = document.getElementById("react-container")
+    let thing = React.render(root, container)
+    set(app, "root", thing)
+    body.addEventListener("click", focusClickhole)
+    tick()
+end
+
+start()

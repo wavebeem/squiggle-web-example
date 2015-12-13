@@ -10,5 +10,8 @@
   "dependencies": {
     "browserify": "^11.0.1",
     "react": "^0.13.3"
+  },
+  "devDependencies": {
+    "squiggle-browserify": "0.0.1"
   }
 }

@@ -1,0 +1,29 @@
+let {React, Object} = global
+
+def componentDidMount(@this)
+    React.findDOMNode(this).focus()
+end
+
+# React is passing some seemingly undocumented second parameter here :\
+def onKeyPress(event, _)
+    event.preventDefault()
+    dispatchEvent({type: "Key", code: event.which})
+end
+
+def render()
+    RE("textarea", {
+        className: "clickhole",
+        onKeyPress
+    })
+end
+
+let proto = {
+    displayName: "Clickhole",
+    componentDidMount,
+    render,
+    onKeyPress
+}
+
+let Clickhole = React.createClass(proto)
+
+Object.assign(exports, {Clickhole})
