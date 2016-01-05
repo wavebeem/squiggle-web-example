@@ -2,7 +2,7 @@
 set -e
 
 # destination="s3://dev.mockbrian.com/squiggle-game-example"
-destination="s3://mockbrian.com/squiggle-game-example"
+destination="s3://mockbrian.com/sqg-game"
 
 s3() {
     local cmd="$1"
