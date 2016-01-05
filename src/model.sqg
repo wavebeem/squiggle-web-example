@@ -1,0 +1,75 @@
+let {rangeDo, hashCoord} = require "./util"
+let {Object, setTimeout} = global
+
+let app = Object()
+
+let K = {
+    W: 119,
+    A: 97,
+    S: 115,
+    D: 100
+}
+
+def makeRoom(width, height) do
+    let room = Object()
+    rangeDo(0, width, fn(x) do
+        rangeDo(0, height, fn(y) do
+            let k = hashCoord(x, y)
+            Object.assign(room, {(k): undefined})
+        end)
+    end)
+    Object.assign(room, {width, height})
+    Object.freeze(room)
+end
+
+let initialState = {
+    x: 0,
+    y: 0,
+    blink: false,
+    room: makeRoom(40, 20)
+}
+
+def dispatchEvent(event) do
+    let {root, state} = app
+    let newState =
+        match event
+        case {type: "Key", code} then
+            handleKey(state, code)
+        case {type: "Tick"} then
+            handleTick(state)
+        end
+    root.setState(newState)
+    Object.assign(app, {state: newState})
+end
+
+def handleTick(state) do
+    state ~ {blink: not state.blink}
+end
+
+def handleKey(state, code) do
+    let {x, y} = state
+    let delta =
+        match code
+        case (K.W) then {y: y - 1}
+        case (K.A) then {x: x - 1}
+        case (K.S) then {y: y + 1}
+        case (K.D) then {x: x + 1}
+        else error "handleKey fail"
+        end
+
+    state ~ delta
+end
+
+def tick() do
+    dispatchEvent({type: "Tick"})
+    setTimeout(tick, 300)
+end
+
+def init(root) do
+    Object.assign(app, {root, state: initialState})
+    tick()
+end
+
+export init
+export initialState
+export dispatchEvent

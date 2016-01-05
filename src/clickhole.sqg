@@ -1,24 +1,27 @@
-let {React, Object} = global
+let React = require "react"
+let {dispatchEvent} = require "./model"
+let {Object} = global
+let RE = React.createElement
 
-def componentDidMount(@this)
+def componentDidMount(@this) do
     React.findDOMNode(this).focus()
 end
 
 # React is passing some seemingly undocumented second parameter here :\
-def onKeyPress(event, _)
+def onKeyPress(event, ...) do
     event.preventDefault()
     dispatchEvent({type: "Key", code: event.which})
 end
 
-def render()
-    RE("textarea", {
-        className: "clickhole",
-        onKeyPress
-    })
+def render() do
+    let className = "clickhole"
+    RE("textarea", {className, onKeyPress})
 end
 
+let displayName = "Clickhole"
+
 let proto = {
-    displayName: "Clickhole",
+    displayName,
     componentDidMount,
     render,
     onKeyPress
@@ -26,4 +29,4 @@ let proto = {
 
 let Clickhole = React.createClass(proto)
 
-Object.assign(exports, {Clickhole})
+export Clickhole

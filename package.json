@@ -8,10 +8,11 @@
   "author": "Brian Mock <brian@mockbrian.com>",
   "license": "MIT",
   "dependencies": {
-    "browserify": "^11.0.1",
     "react": "^0.13.3"
   },
   "devDependencies": {
-    "squiggle-browserify": "0.0.1"
+    "browserify": "^11.0.1",
+    "squiggle-browserify": "0.0.1",
+    "watchify": "^3.6.1"
   }
 }

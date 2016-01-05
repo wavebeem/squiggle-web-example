@@ -1,29 +1,56 @@
-let Clickhole = require "./clickhole"
-let {Object, React} = global
+let React = require "react"
+let Model = require "./model"
+let {Clickhole} = require "./clickhole"
+let {rangeDo, hashCoord, rangeMap, classes} = require "./util"
+let {Object, Date, String} = global
 let RE = React.createElement
 
-def makeRoom(w, h)
-    def mutateRoom(room)
-        rangeDo(0, w, fn(x)
-            rangeDo(0, h, fn(y)
-                set(room, hashCoord(x, y), undefined)
-            )
-        )
-        set(room, "width", w)
-        set(room, "height", h)
-    end
+let CHAR_EMPTY = "\u{B7}"
+let CHAR_PLAYER = "@"
 
-    freezeAfter(Object(), mutateRoom)
+def renderCell(x, y, model, occupant) do
+    let t = occupant.type
+    let c =
+        if t == "Player"
+        then CHAR_PLAYER
+        else CHAR_EMPTY
+        end
+    let blink =
+        if model.blink and t == "Player"
+        then "is-blinking"
+        else ""
+        end
+    let className =
+        classes([
+            "game-cell",
+            "has-" .. t.toLowerCase(),
+            blink
+        ])
+    let key = hashCoord(x, y)
+    let props = {key, className}
+
+    RE("td", props, c)
 end
 
-let state = {
-    x: 0,
-    y: 0,
-    blink: false,
-    room: makeRoom(40, 20)
-}
+def renderedCellsFor(model) do
+    let {width, height} = model.room
+    rangeMap(0, height, fn(y) do
+        let key = String(y)
+        let className = "game-row"
+        let kids = rangeMap(0, width, fn(x) do
+            let type =
+                if x == model.x and y == model.y
+                then "Player"
+                else "Empty"
+                end
+            let occupant = {type}
+            renderCell(x, y, model, occupant)
+        end)
+        RE("tr", {key, className}, kids)
+    end)
+end
 
-def render(@this)
+def render(@this) do
     RE("main", null,
         RE("table", {className: "game-view"},
             RE("tbody", null, renderedCellsFor(this.state))
@@ -33,16 +60,18 @@ def render(@this)
     )
 end
 
-def getInitialState()
-    state
+def getInitialState() do
+    Model.initialState
 end
 
+let displayName = "GameView"
+
 let proto = {
-    displayName: "GameView",
-    render,
-    getInitialState
+    displayName,
+    getInitialState,
+    render
 }
 
 let GameView = React.createClass(proto)
 
-Object.assign(exports, {GameView})
+export GameView

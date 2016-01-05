@@ -1,0 +1,30 @@
+let {Boolean, Object, Array} = global
+
+# No tail recursion optimization, so this only works for reasonably sized values
+def rangeDo(a, b, f) do
+    if a < b then
+        f(a)
+        rangeDo(a + 1, b, f)
+    else
+        undefined
+    end
+end
+
+def rangeMap(a, b, f) do
+    let xs = Array()
+    rangeDo(a, b, fn(i) xs.push(f(i)))
+    Object.freeze(xs)
+end
+
+def hashCoord(x, y) do
+    [x, y].join(" ")
+end
+
+def classes(cs) do
+    cs.filter(Boolean).join(" ")
+end
+
+export rangeDo
+export rangeMap
+export hashCoord
+export classes
