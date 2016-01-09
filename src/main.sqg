@@ -1,7 +1,7 @@
 let React = require "react"
 let Model = require "./model"
 let {GameView} = require "./game-view"
-let {Object, document} = global
+let {document} = global
 
 def focusClickhole(_) do
     document.querySelector(".clickhole").focus()

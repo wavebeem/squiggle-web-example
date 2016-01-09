@@ -1,6 +1,5 @@
 let React = require "react"
 let {dispatchEvent} = require "./model"
-let {Object} = global
 let RE = React.createElement
 
 def componentDidMount(@this) do
@@ -23,8 +22,7 @@ let displayName = "Clickhole"
 let proto = {
     displayName,
     componentDidMount,
-    render,
-    onKeyPress
+    render
 }
 
 let Clickhole = React.createClass(proto)

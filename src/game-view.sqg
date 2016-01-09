@@ -1,8 +1,8 @@
 let React = require "react"
 let Model = require "./model"
 let {Clickhole} = require "./clickhole"
-let {rangeDo, hashCoord, rangeMap, classes} = require "./util"
-let {Object, Date, String} = global
+let {hashCoord, rangeMap, classes} = require "./util"
+let {Date, String} = global
 let RE = React.createElement
 
 let CHAR_EMPTY = "\u{B7}"

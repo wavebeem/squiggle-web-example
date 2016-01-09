@@ -12,7 +12,7 @@
   },
   "devDependencies": {
     "browserify": "^11.0.1",
-    "squiggle-browserify": "0.0.1",
+    "squiggle-browserify": "0.0.3",
     "watchify": "^3.6.1"
   }
 }
